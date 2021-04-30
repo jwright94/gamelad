@@ -106,7 +106,6 @@ impl CPU {
             0x21 => self.ld_imm_u16(Reg16::HL, data),
             0x31 => self.ld_imm_u16(Reg16::SP, data),
 
-
             // LD (HL), A
             0x77 => {
                 self.store(self.get_hl(), self.a, data);
@@ -228,6 +227,22 @@ impl CPU {
                 self.cycle_delay = 8;
             },
 
+            // LDI A, (DE)
+            0x1a => {
+                println!("LD A, (DE)");
+                let addr = self.get_de();
+                self.a = self.read(addr, data);
+                self.cycle_delay = 8;
+            },
+
+            // LDI A, (BC)
+            0x0a => {
+                println!("LD A, (BC)");
+                let addr = self.get_bc();
+                self.a = self.read(addr, data);
+                self.cycle_delay = 8;
+            },
+
             // INC r8
             0x04 => self.inc_r8(Reg8::B),
             0x14 => self.inc_r8(Reg8::D),
@@ -295,6 +310,15 @@ impl CPU {
                     self.set_flag(CPU::FLAG_ZERO);
                 }
             },
+
+            // XOR
+            0xa8 => self.xor(Reg8::B),
+            0xa9 => self.xor(Reg8::C),
+            0xaa => self.xor(Reg8::D),
+            0xab => self.xor(Reg8::E),
+            0xac => self.xor(Reg8::H),
+            0xad => self.xor(Reg8::L),
+            0xaf => self.xor(Reg8::A),
 
             // AND
             0xa0..=0xa7 | 0xe6 => {
@@ -507,5 +531,18 @@ impl CPU {
         let new_value = self.alu_inc(current_value);
 
         self.set_r8(register, new_value);
+    }
+
+    fn xor(&mut self, register: Reg8){
+        let value = self.get_r8(register);
+        self.a ^= value;
+
+        self.unset_flag(CPU::FLAG_ALL);
+
+        if self.a == 0 {
+            self.set_flag(CPU::FLAG_ZERO);
+        }
+
+        self.cycle_delay = 4;
     }
 }

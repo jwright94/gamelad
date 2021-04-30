@@ -163,6 +163,7 @@ impl CPU {
     pub const FLAG_SUBTRACT: u8 = 1 << 0x06;
     pub const FLAG_HALF_CARRY: u8 = 1 << 0x05;
     pub const FLAG_CARRY: u8 = 1 << 0x04;
+    pub const FLAG_ALL: u8 = CPU::FLAG_ZERO | CPU::FLAG_SUBTRACT | CPU::FLAG_HALF_CARRY | CPU::FLAG_CARRY;
 
     #[inline(always)]
     pub fn set_flag(&mut self, flag: u8) {

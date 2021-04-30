@@ -14,3 +14,12 @@ pub enum Condition {
     Z, NZ, C, NC, Always
 }
 
+pub enum Address {
+    HL, HLI, HLD, DE, BC
+}
+
+pub enum Dst {
+    Dst8(Reg8),
+    Dst16(Reg16),
+    Address(Address)
+}
