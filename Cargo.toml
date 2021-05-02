@@ -9,4 +9,7 @@ edition = "2018"
 [dependencies]
 #winit     = "0.20.0"
 #ash       = "0.29.0"
+num-traits = "0.2"
+num-derive = "0.3"
+num = "0.4"
 sdl2 = "*"

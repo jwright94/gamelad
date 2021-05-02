@@ -11,7 +11,7 @@ use gamelads::gamelad::Gamelad;
 
 fn main() -> Result<(), String> {
 
-    let filename = "./roms/cpu_instrs.gb";//"./asm/bin/load_reg";
+    let filename = "./roms/01-special.gb";//"./asm/bin/load_reg";
     
     let mut gamelad = Gamelad::new(filename);
 

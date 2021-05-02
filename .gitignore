@@ -3,6 +3,7 @@
 
 debug/
 target/
+roms/
 
 Cargo.lock
 

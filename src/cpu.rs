@@ -1,8 +1,9 @@
 
 use std::fmt;
 
-mod registers;
-mod opcodes;
+pub mod registers;
+pub mod opcodes;
+pub mod mbc;
 
 // L/H registers reversed, c9 instruction lands on wrong addr 49922 instead of 1113 (0x459)
 

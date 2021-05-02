@@ -106,6 +106,15 @@ impl CPU {
             0x21 => self.ld_imm_u16(Reg16::HL, data),
             0x31 => self.ld_imm_u16(Reg16::SP, data),
 
+            // LD R, (HL)
+            0x46 => self.ldhl(Reg8::B, data),
+            0x56 => self.ldhl(Reg8::D, data),
+            0x66 => self.ldhl(Reg8::H, data),
+            0x4e => self.ldhl(Reg8::C, data),
+            0x5e => self.ldhl(Reg8::E, data),
+            0x6e => self.ldhl(Reg8::L, data),
+            0x7e => self.ldhl(Reg8::A, data),
+
             // LD (HL), A
             0x77 => {
                 self.store(self.get_hl(), self.a, data);
@@ -208,22 +217,56 @@ impl CPU {
                 };
                 self.cycle_delay = 8;
             },
-
-            // LDI A, (HL+)
-            0x2a => {
-                println!("LDI A, (HL+)");
-                let hl = self.get_hl();
-                self.a = self.read(hl, data);
-                self.set_hl(hl+1);
+            
+            // LD [HL], A
+            0x12 => {
+                println!("LD [DE], A");
+                let addr = self.get_de();
+                self.store(addr, self.a, data);
                 self.cycle_delay = 8;
             },
 
-            // LDI A, (HL-)
-            0x3a => {
-                println!("LDI A, (HL-)");
+            // LD [HL], A
+            0x02 => {
+                println!("LD [DE], A");
+                let addr = self.get_bc();
+                self.store(addr, self.a, data);
+                self.cycle_delay = 8;
+            },
+
+            // LDI [HL], A
+            0x22 => {
+                println!("LDI [HL], A");
+                let hl = self.get_hl();
+                self.store(hl, self.a, data);
+                self.set_hl(hl.wrapping_add(1));
+                self.cycle_delay = 8;
+            },
+
+            // LDI A, [HL]
+            0x2a => {
+                println!("LDI A, [HL]");
                 let hl = self.get_hl();
                 self.a = self.read(hl, data);
-                self.set_hl(hl-1);
+                self.set_hl(hl.wrapping_add(1));
+                self.cycle_delay = 8;
+            },
+
+            // LDD A, [HL]
+            0x3a => {
+                println!("LDD A, [HL]");
+                let hl = self.get_hl();
+                self.a = self.read(hl, data);
+                self.set_hl(hl.wrapping_sub(1));
+                self.cycle_delay = 8;
+            },
+            
+            // LDD [HL], A
+            0x32 => {
+                println!("LDD [HL], A");
+                let hl = self.get_hl();
+                self.a = self.read(hl, data);
+                self.set_hl(hl.wrapping_sub(1));
                 self.cycle_delay = 8;
             },
 
@@ -311,6 +354,28 @@ impl CPU {
                 }
             },
 
+            // ADD
+            0x80 => self.add(Reg8::B),
+            0x81 => self.add(Reg8::C),
+            0x82 => self.add(Reg8::D),
+            0x83 => self.add(Reg8::E),
+            0x84 => self.add(Reg8::H),
+            0x85 => self.add(Reg8::L),
+            0x87 => self.add(Reg8::A),
+
+            0xc6 => self.add_imm(data),
+
+            // SUB
+            0x90 => self.sub(Reg8::B),
+            0x91 => self.sub(Reg8::C),
+            0x92 => self.sub(Reg8::D),
+            0x93 => self.sub(Reg8::E),
+            0x94 => self.sub(Reg8::H),
+            0x95 => self.sub(Reg8::L),
+            0x97 => self.sub(Reg8::A),
+
+            0xd6 => self.sub_imm(data),
+            
             // XOR
             0xa8 => self.xor(Reg8::B),
             0xa9 => self.xor(Reg8::C),
@@ -544,5 +609,39 @@ impl CPU {
         }
 
         self.cycle_delay = 4;
+    }
+
+    fn add(&mut self, register: Reg8){
+        let value = self.get_r8(register);
+        
+        self.unset_flag(CPU::FLAG_ALL);
+
+        self.a = self.alu_add(self.a, value);
+
+        self.cycle_delay = 4;
+    }
+
+    fn add_imm(&mut self, data: &mut Vec<u8>) {
+        let value = self.fetch(data);
+        self.a = self.alu_add(self.a, value);
+        self.cycle_delay = 8;
+    }
+
+    fn sub(&mut self, register: Reg8){
+        let value = self.get_r8(register);
+        self.a = self.alu_sub(self.a, value);
+        self.cycle_delay = 4;
+    }
+
+    fn sub_imm(&mut self, data: &mut Vec<u8>) {
+        let value = self.fetch(data);
+        self.a = self.alu_sub(self.a, value);
+        self.cycle_delay = 8;
+    }
+
+    fn ldhl(&mut self, register: Reg8, data: &mut Vec<u8>){
+        let value = self.read(self.get_hl(), data);
+        self.set_r8(register, value);
+        self.cycle_delay = 8;
     }
 }
