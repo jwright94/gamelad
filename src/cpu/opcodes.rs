@@ -1,10 +1,11 @@
 
+use crate::cpu::mbc::MemoryBankController;
 use crate::cpu::CPU;
 use crate::cpu::registers::{ Reg8, Reg16, Condition };
 
 
 impl CPU {
-    pub fn step(&mut self, data: &mut Vec<u8>) {
+    pub fn step(&mut self, data: &mut dyn MemoryBankController) {
         if self.stopped {
             println!("stopped");
             return;
@@ -117,7 +118,7 @@ impl CPU {
 
             // LD (HL), A
             0x77 => {
-                self.store(self.get_hl(), self.a, data);
+                data.write(self.get_hl(), self.a);
                 self.cycle_delay = 8;
             },
 
@@ -132,7 +133,7 @@ impl CPU {
 
             // RET
             0xc9 => {
-                self.pc = self.read_u16(self.sp, data);
+                self.pc = data.read_u16(self.sp);
                 self.sp += 2;
                 self.cycle_delay = 16;
             },
@@ -154,21 +155,21 @@ impl CPU {
             // Write to IO-Port n FF00+n
             0xe0 => {
                 let addr: u16 = 0xFF00_u16 + self.fetch(data) as u16;
-                self.store(addr, self.a, data);
+                data.write(addr, self.a);
                 self.cycle_delay = 12;
             },
 
             // Read from IO-Port n FF00+n
             0xf0 => {
                 let addr: u16 = 0xFF00_u16 + self.fetch(data) as u16;
-                self.a = self.read(addr, data);
+                self.a = data.read(addr);
                 self.cycle_delay = 12;
             },
 
             // Store A at Address
             0xea => {
                 let addr = self.fetch_u16(data);
-                self.store(addr, self.a, data);
+                data.write(addr, self.a);
                 self.cycle_delay = 12;
             },
             
@@ -222,7 +223,7 @@ impl CPU {
             0x12 => {
                 println!("LD [DE], A");
                 let addr = self.get_de();
-                self.store(addr, self.a, data);
+                data.write(addr, self.a);
                 self.cycle_delay = 8;
             },
 
@@ -230,7 +231,7 @@ impl CPU {
             0x02 => {
                 println!("LD [DE], A");
                 let addr = self.get_bc();
-                self.store(addr, self.a, data);
+                data.write(addr, self.a);
                 self.cycle_delay = 8;
             },
 
@@ -238,7 +239,7 @@ impl CPU {
             0x22 => {
                 println!("LDI [HL], A");
                 let hl = self.get_hl();
-                self.store(hl, self.a, data);
+                data.write(hl, self.a);
                 self.set_hl(hl.wrapping_add(1));
                 self.cycle_delay = 8;
             },
@@ -247,7 +248,7 @@ impl CPU {
             0x2a => {
                 println!("LDI A, [HL]");
                 let hl = self.get_hl();
-                self.a = self.read(hl, data);
+                self.a = data.read(hl);
                 self.set_hl(hl.wrapping_add(1));
                 self.cycle_delay = 8;
             },
@@ -256,7 +257,7 @@ impl CPU {
             0x3a => {
                 println!("LDD A, [HL]");
                 let hl = self.get_hl();
-                self.a = self.read(hl, data);
+                self.a = data.read(hl);
                 self.set_hl(hl.wrapping_sub(1));
                 self.cycle_delay = 8;
             },
@@ -265,7 +266,7 @@ impl CPU {
             0x32 => {
                 println!("LDD [HL], A");
                 let hl = self.get_hl();
-                self.a = self.read(hl, data);
+                self.a = data.read(hl);
                 self.set_hl(hl.wrapping_sub(1));
                 self.cycle_delay = 8;
             },
@@ -274,7 +275,7 @@ impl CPU {
             0x1a => {
                 println!("LD A, (DE)");
                 let addr = self.get_de();
-                self.a = self.read(addr, data);
+                self.a = data.read(addr);
                 self.cycle_delay = 8;
             },
 
@@ -282,7 +283,7 @@ impl CPU {
             0x0a => {
                 println!("LD A, (BC)");
                 let addr = self.get_bc();
-                self.a = self.read(addr, data);
+                self.a = data.read(addr);
                 self.cycle_delay = 8;
             },
 
@@ -301,8 +302,8 @@ impl CPU {
                 self.cycle_delay = 4;
                 
                 let addr = self.get_hl();
-                let value = self.alu_inc(self.read(addr, data)); 
-                self.store(addr, value, data);
+                let value = self.alu_inc(data.read(addr)); 
+                data.write(addr, value);
                 self.cycle_delay = 12; 
             },
 
@@ -319,8 +320,8 @@ impl CPU {
                     0x25 => self.h = self.alu_dec(self.h),
                     0x35 => { 
                         let addr = self.get_hl();
-                        let value = self.alu_dec(self.read(addr, data)); 
-                        self.store(addr, value, data);
+                        let value = self.alu_dec(data.read(addr)); 
+                        data.write(addr, value);
                         self.cycle_delay = 12; 
                     },
                     0x0d => self.c = self.alu_dec(self.c),
@@ -345,7 +346,7 @@ impl CPU {
                     0xb4 => self.a |= self.h,
                     0xb5 => self.a |= self.l,
                     0xb7 => self.a |= self.a,
-                    0xb6 => { self.a |= self.read(self.get_hl(), data); self.cycle_delay = 8 },
+                    0xb6 => { self.a |= data.read(self.get_hl()); self.cycle_delay = 8 },
                     _ => unreachable!()
                 };
 
@@ -400,7 +401,7 @@ impl CPU {
                     0xa5 => self.a &= self.l,
                     0xa7 => self.a &= self.a,
                     0xa6 => { 
-                        self.a &= self.read(self.get_hl(), data); 
+                        self.a &= data.read(self.get_hl()); 
                         self.cycle_delay = 8; 
                     },
                     0xe6 => {
@@ -435,7 +436,7 @@ impl CPU {
             // LD A, (a16) 0xfa
             0xfa => {
                 let imm = self.fetch_u16(data);
-                self.a = self.read(imm, data);
+                self.a = data.read(imm);
                 self.cycle_delay = 16;
             },
 
@@ -445,7 +446,7 @@ impl CPU {
         }
     }
 
-    fn ld_imm_u8(&mut self, dst: Reg8, data: &Vec<u8>) {
+    fn ld_imm_u8(&mut self, dst: Reg8, data: &dyn MemoryBankController) {
         println!("LD {:?}, d8", dst);
         let imm = self.fetch(data);
 
@@ -462,7 +463,7 @@ impl CPU {
         self.cycle_delay = 8;
     }
 
-    fn ld_imm_u16(&mut self, dst: Reg16, data: &Vec<u8>) {
+    fn ld_imm_u16(&mut self, dst: Reg16, data: &MemoryBankController) {
         println!("LD {:?}, d16", dst);
         let imm = self.fetch_u16(data);
         
@@ -542,13 +543,13 @@ impl CPU {
         }
     }
 
-    fn call(&mut self, condition: Condition, data: &mut Vec<u8>){
+    fn call(&mut self, condition: Condition, data: &dyn MemoryBankController){
         let next_addr = self.fetch_u16(data);
         println!("CALL {:?}, {:#04x}", condition, next_addr);
         
         if self.check_condition(condition) {
             self.sp -= 2;
-            self.store_u16(self.sp, self.pc, data);
+            data.write_u16(self.sp, self.pc);
             self.pc = next_addr;
             self.cycle_delay = 24;
         } else {
@@ -556,7 +557,7 @@ impl CPU {
         }
     }
 
-    fn jr(&mut self, condition: Condition, data: &mut Vec<u8>){
+    fn jr(&mut self, condition: Condition, data: &dyn MemoryBankController){
         let bytes = self.fetch(data).to_le_bytes();
         let offset:i32 = i8::from_le_bytes(bytes) as i32;
         println!("JR {:?}", condition);
@@ -569,18 +570,18 @@ impl CPU {
         }
     }
 
-    fn push(&mut self, register: Reg16, data: &mut Vec<u8>){
+    fn push(&mut self, register: Reg16, data: &dyn MemoryBankController){
         println!("PUSH {:?}", register);
         self.sp -= 2;
         let value = self.get_r16(register);
 
-        self.store_u16(self.sp, value, data);
+        data.write_u16(self.sp, value);
         self.cycle_delay = 16;
     }
 
-    fn pop(&mut self, register: Reg16, data: &mut Vec<u8>){
+    fn pop(&mut self, register: Reg16, data: &dyn MemoryBankController){
         println!("POP {:?}", register);
-        let value = self.read_u16(self.sp, data);
+        let value = data.read_u16(self.sp);
 
         self.set_r16(register, value);
 
@@ -621,7 +622,7 @@ impl CPU {
         self.cycle_delay = 4;
     }
 
-    fn add_imm(&mut self, data: &mut Vec<u8>) {
+    fn add_imm(&mut self, data: &dyn MemoryBankController) {
         let value = self.fetch(data);
         self.a = self.alu_add(self.a, value);
         self.cycle_delay = 8;
@@ -633,14 +634,14 @@ impl CPU {
         self.cycle_delay = 4;
     }
 
-    fn sub_imm(&mut self, data: &mut Vec<u8>) {
+    fn sub_imm(&mut self, data: &dyn MemoryBankController) {
         let value = self.fetch(data);
         self.a = self.alu_sub(self.a, value);
         self.cycle_delay = 8;
     }
 
-    fn ldhl(&mut self, register: Reg8, data: &mut Vec<u8>){
-        let value = self.read(self.get_hl(), data);
+    fn ldhl(&mut self, register: Reg8, data: &dyn MemoryBankController){
+        let value = data.read(self.get_hl());
         self.set_r8(register, value);
         self.cycle_delay = 8;
     }

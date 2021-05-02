@@ -5,10 +5,11 @@ use crate::cpu::CPU;
 
 use std::fs;
 
+//#[derive(MemoryBankController)]
 pub struct Gamelad {
     cpu: CPU,
-    rom: Vec<u8>,
     memory: Vec<u8>,
+    rom: Vec<u8>,
     mbc_type: MemoryBankControllerType
 }
 
@@ -82,7 +83,12 @@ impl Gamelad {
             cycle += 1;
             println!("cycle #{}", cycle);
             println!("Initial State {}", self.cpu);
-            self.cpu.step(&mut self.rom);
+
+            let mbc: &mut dyn MemoryBankController = self;
+            {
+                self.cpu.step(mbc);
+            }
+
             println!();
         }
     }
@@ -94,7 +100,7 @@ impl Gamelad {
         self.cpu.set_de(0x01d8);
         self.cpu.set_hl(0x014d);
         self.cpu.sp = 0xfffe;
-
+        /*
         self.write(0xff05, 0x00);
         self.write(0xff06, 0x00);
         self.write(0xff07, 0x00);
@@ -136,12 +142,19 @@ impl Gamelad {
         self.write(0xFF49, 0xFF);
         self.write(0xFF4A, 0x00);
         self.write(0xFF4B, 0x00);
-        self.write(0xFFFF, 0x00);
+        self.write(0xFFFF, 0x00);*/
 
     }
 }
 
 impl MemoryBankController for Gamelad {
-    fn write(&mut self, _: u16, _: u8) { todo!() }
-    fn read(&mut self, _: u16, _: u8) { todo!() }
+    fn read(&mut self, addr: u16) -> u8 {
+        let ret = self.memory[addr as usize];
+        println!("read {:#08x} from {:#08x}", ret, addr);
+        ret
+    }
+
+    fn write(&mut self, addr: u16, value: u8){
+        self.memory[addr as usize] = value;
+    }
 }

@@ -1,3 +1,4 @@
+use crate::cpu::{ unmake_u16, make_u16 };
 use num_derive::FromPrimitive;    
 use num_traits::FromPrimitive;
 
@@ -35,5 +36,21 @@ pub enum MemoryBankControllerType {
 
 pub trait MemoryBankController {
     fn write(&mut self, addr: u16, value: u8);
-    fn read(&mut self, addr: u16, value: u8);
+    fn read(&mut self, addr: u16) -> u8;
+
+    fn write_u16(&mut self, addr: u16, value: u16){
+        let (lo, hi) = unmake_u16(value);
+
+        self.write(addr, lo);
+        self.write(addr + 1, hi);
+    }
+
+    fn read_u16(&mut self, addr: u16) -> u16 {
+        let lo = self.read(addr);
+        let hi = self.read(addr+1);
+
+        let ret = make_u16(lo, hi);
+        println!("read {:#08x} from {:#08x}", ret, addr);
+        ret
+    }
 }

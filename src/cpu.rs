@@ -1,4 +1,5 @@
 
+use crate::cpu::mbc::MemoryBankController;
 use std::fmt;
 
 pub mod registers;
@@ -67,44 +68,17 @@ impl CPU {
         self.stopped
     }
 
-    pub fn fetch(&mut self, data: &Vec<u8>) -> u8 {
-        let result = data[self.pc as usize];
+    pub fn fetch(&mut self, data: &dyn MemoryBankController) -> u8 {
+        let result = data.read(self.pc);
         self.pc += 1;
         result
     }
 
-    pub fn fetch_u16(&mut self, data: &Vec<u8>) -> u16 {
+    pub fn fetch_u16(&mut self, data: &dyn MemoryBankController) -> u16 {
         let lo = self.fetch(data);
         let hi = self.fetch(data);
 
-        return make_u16(lo, hi);
-    }
-
-    pub fn read(&self, addr: u16, data: &Vec<u8>) -> u8 {
-        let ret = data[addr as usize];
-        println!("read {:#08x} from {:#08x}", ret, addr);
-        ret
-    }
-
-    pub fn read_u16(&self, addr: u16, data: &Vec<u8>) -> u16 {
-        let lo = data[addr as usize];
-        let hi = data[(addr+1) as usize];
-
-        let ret = make_u16(lo, hi);
-        println!("read {:#08x} from {:#08x}", ret, addr);
-        ret
-    }
-
-    
-    pub fn store(&self, addr: u16, value: u8, data: &mut Vec<u8>){
-        data[addr as usize] = value;
-    }
-
-    pub fn store_u16(&self, addr: u16, value: u16, data: &mut Vec<u8>){
-        let (lo, hi) = unmake_u16(value);
-
-        data[addr as usize] = lo;
-        data[addr as usize + 1] = hi;
+        make_u16(lo, hi)
     }
 }
 
