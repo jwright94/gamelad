@@ -32,3 +32,8 @@ pub enum MemoryBankControllerType {
     Huc3 = 0xFE,
     Huc1RamBattery = 0xFF
 }
+
+pub trait MemoryBankController {
+    fn write(&mut self, addr: u16, value: u8);
+    fn read(&mut self, addr: u16, value: u8);
+}

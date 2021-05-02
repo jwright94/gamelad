@@ -1,7 +1,7 @@
 
 
+use crate::cpu::mbc::{ MemoryBankController, MemoryBankControllerType};
 use crate::cpu::CPU;
-use crate::cpu::mbc::MemoryBankControllerType;
 
 use std::fs;
 
@@ -45,7 +45,6 @@ impl MemoryRange {
 }
 
 impl Gamelad {
-    const BUS_BANK_0: u16 = 3;
     pub fn new(filename: &str) -> Gamelad {
         println!("loading {}..", filename);
 
@@ -85,12 +84,6 @@ impl Gamelad {
             println!("Initial State {}", self.cpu);
             self.cpu.step(&mut self.rom);
             println!();
-        }
-    }
-
-    pub fn write(&mut self, addr: u16, value: u8){
-        if MemoryRange::ROM_BANK_0.in_range(addr) {
-
         }
     }
 
@@ -146,4 +139,9 @@ impl Gamelad {
         self.write(0xFFFF, 0x00);
 
     }
+}
+
+impl MemoryBankController for Gamelad {
+    fn write(&mut self, _: u16, _: u8) { todo!() }
+    fn read(&mut self, _: u16, _: u8) { todo!() }
 }
