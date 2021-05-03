@@ -1,5 +1,6 @@
 
 
+use crate::cpu::mbc::Mbc1;
 use crate::cpu::mbc::{ MemoryBankController, MemoryBankControllerType};
 use crate::cpu::CPU;
 
@@ -75,19 +76,25 @@ impl Gamelad {
     }
 
     pub fn run(&mut self){
-        self.reset();
 
         let mut cycle = 0;
+
+        self.reset();
+
+        let mut mbc = Mbc1{
+            memory: &mut self.memory,
+        };
+        
 
         while !self.cpu.is_stopped() {
             cycle += 1;
             println!("cycle #{}", cycle);
             println!("Initial State {}", self.cpu);
 
-            let mbc: &mut dyn MemoryBankController = self;
-            {
-                self.cpu.step(mbc);
-            }
+            //let mbc: &mut dyn MemoryBankController = &mut mbc;
+            
+            self.cpu.step(&mut mbc);
+            
 
             println!();
         }
@@ -100,61 +107,50 @@ impl Gamelad {
         self.cpu.set_de(0x01d8);
         self.cpu.set_hl(0x014d);
         self.cpu.sp = 0xfffe;
+        
         /*
-        self.write(0xff05, 0x00);
-        self.write(0xff06, 0x00);
-        self.write(0xff07, 0x00);
-        self.write(0xff10, 0x80);
-        self.write(0xff11, 0xBF);
-        self.write(0xff12, 0xF3);
-        self.write(0xff14, 0xBF);
-        self.write(0xff16, 0x3F);
-        self.write(0xff17, 0x00);
-        self.write(0xff19, 0x00);
+        mbc.write(0xff05, 0x00);
+        mbc.write(0xff06, 0x00);
+        mbc.write(0xff07, 0x00);
+        mbc.write(0xff10, 0x80);
+        mbc.write(0xff11, 0xBF);
+        mbc.write(0xff12, 0xF3);
+        mbc.write(0xff14, 0xBF);
+        mbc.write(0xff16, 0x3F);
+        mbc.write(0xff17, 0x00);
+        mbc.write(0xff19, 0x00);
 
-        self.write(0xFF05, 0x00);
-        self.write(0xFF06, 0x00);
-        self.write(0xFF07, 0x00);
-        self.write(0xFF10, 0x80);
-        self.write(0xFF11, 0xBF);
-        self.write(0xFF12, 0xF3);
-        self.write(0xFF14, 0xBF);
-        self.write(0xFF16, 0x3F);
-        self.write(0xFF17, 0x00);
-        self.write(0xFF19, 0xBF);
-        self.write(0xFF1A, 0x7F);
-        self.write(0xFF1B, 0xFF);
-        self.write(0xFF1C, 0x9F);
-        self.write(0xFF1E, 0xBF);
-        self.write(0xFF20, 0xFF);
-        self.write(0xFF21, 0x00);
-        self.write(0xFF22, 0x00);
-        self.write(0xFF23, 0xBF);
-        self.write(0xFF24, 0x77);
-        self.write(0xFF25, 0xF3);
-        self.write(0xFF26, 0xF1);//-GB, 0xF0-SGB ; NR52
-        self.write(0xFF40, 0x91);
-        self.write(0xFF42, 0x00);
-        self.write(0xFF43, 0x00);
-        self.write(0xFF45, 0x00);
-        self.write(0xFF47, 0xFC);
-        self.write(0xFF48, 0xFF);
-        self.write(0xFF49, 0xFF);
-        self.write(0xFF4A, 0x00);
-        self.write(0xFF4B, 0x00);
-        self.write(0xFFFF, 0x00);*/
-
-    }
-}
-
-impl MemoryBankController for Gamelad {
-    fn read(&mut self, addr: u16) -> u8 {
-        let ret = self.memory[addr as usize];
-        println!("read {:#08x} from {:#08x}", ret, addr);
-        ret
-    }
-
-    fn write(&mut self, addr: u16, value: u8){
-        self.memory[addr as usize] = value;
+        mbc.write(0xFF05, 0x00);
+        mbc.write(0xFF06, 0x00);
+        mbc.write(0xFF07, 0x00);
+        mbc.write(0xFF10, 0x80);
+        mbc.write(0xFF11, 0xBF);
+        mbc.write(0xFF12, 0xF3);
+        mbc.write(0xFF14, 0xBF);
+        mbc.write(0xFF16, 0x3F);
+        mbc.write(0xFF17, 0x00);
+        mbc.write(0xFF19, 0xBF);
+        mbc.write(0xFF1A, 0x7F);
+        mbc.write(0xFF1B, 0xFF);
+        mbc.write(0xFF1C, 0x9F);
+        mbc.write(0xFF1E, 0xBF);
+        mbc.write(0xFF20, 0xFF);
+        mbc.write(0xFF21, 0x00);
+        mbc.write(0xFF22, 0x00);
+        mbc.write(0xFF23, 0xBF);
+        mbc.write(0xFF24, 0x77);
+        mbc.write(0xFF25, 0xF3);
+        mbc.write(0xFF26, 0xF1);//-GB, 0xF0-SGB ; NR52
+        mbc.write(0xFF40, 0x91);
+        mbc.write(0xFF42, 0x00);
+        mbc.write(0xFF43, 0x00);
+        mbc.write(0xFF45, 0x00);
+        mbc.write(0xFF47, 0xFC);
+        mbc.write(0xFF48, 0xFF);
+        mbc.write(0xFF49, 0xFF);
+        mbc.write(0xFF4A, 0x00);
+        mbc.write(0xFF4B, 0x00);
+        mbc.write(0xFFFF, 0x00);
+        */
     }
 }

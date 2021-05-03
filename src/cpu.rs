@@ -68,13 +68,13 @@ impl CPU {
         self.stopped
     }
 
-    pub fn fetch(&mut self, data: &dyn MemoryBankController) -> u8 {
+    pub fn fetch(&mut self, data: &mut dyn MemoryBankController) -> u8 {
         let result = data.read(self.pc);
         self.pc += 1;
         result
     }
 
-    pub fn fetch_u16(&mut self, data: &dyn MemoryBankController) -> u16 {
+    pub fn fetch_u16(&mut self, data: &mut dyn MemoryBankController) -> u16 {
         let lo = self.fetch(data);
         let hi = self.fetch(data);
 

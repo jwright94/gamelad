@@ -446,7 +446,7 @@ impl CPU {
         }
     }
 
-    fn ld_imm_u8(&mut self, dst: Reg8, data: &dyn MemoryBankController) {
+    fn ld_imm_u8(&mut self, dst: Reg8, data: &mut dyn MemoryBankController) {
         println!("LD {:?}, d8", dst);
         let imm = self.fetch(data);
 
@@ -463,7 +463,7 @@ impl CPU {
         self.cycle_delay = 8;
     }
 
-    fn ld_imm_u16(&mut self, dst: Reg16, data: &MemoryBankController) {
+    fn ld_imm_u16(&mut self, dst: Reg16, data: &mut MemoryBankController) {
         println!("LD {:?}, d16", dst);
         let imm = self.fetch_u16(data);
         
@@ -543,7 +543,7 @@ impl CPU {
         }
     }
 
-    fn call(&mut self, condition: Condition, data: &dyn MemoryBankController){
+    fn call(&mut self, condition: Condition, data: &mut dyn MemoryBankController){
         let next_addr = self.fetch_u16(data);
         println!("CALL {:?}, {:#04x}", condition, next_addr);
         
@@ -557,7 +557,7 @@ impl CPU {
         }
     }
 
-    fn jr(&mut self, condition: Condition, data: &dyn MemoryBankController){
+    fn jr(&mut self, condition: Condition, data: &mut dyn MemoryBankController){
         let bytes = self.fetch(data).to_le_bytes();
         let offset:i32 = i8::from_le_bytes(bytes) as i32;
         println!("JR {:?}", condition);
@@ -570,7 +570,7 @@ impl CPU {
         }
     }
 
-    fn push(&mut self, register: Reg16, data: &dyn MemoryBankController){
+    fn push(&mut self, register: Reg16, data: &mut dyn MemoryBankController){
         println!("PUSH {:?}", register);
         self.sp -= 2;
         let value = self.get_r16(register);
@@ -579,7 +579,7 @@ impl CPU {
         self.cycle_delay = 16;
     }
 
-    fn pop(&mut self, register: Reg16, data: &dyn MemoryBankController){
+    fn pop(&mut self, register: Reg16, data: &mut dyn MemoryBankController){
         println!("POP {:?}", register);
         let value = data.read_u16(self.sp);
 
@@ -622,7 +622,7 @@ impl CPU {
         self.cycle_delay = 4;
     }
 
-    fn add_imm(&mut self, data: &dyn MemoryBankController) {
+    fn add_imm(&mut self, data: &mut dyn MemoryBankController) {
         let value = self.fetch(data);
         self.a = self.alu_add(self.a, value);
         self.cycle_delay = 8;
@@ -634,13 +634,13 @@ impl CPU {
         self.cycle_delay = 4;
     }
 
-    fn sub_imm(&mut self, data: &dyn MemoryBankController) {
+    fn sub_imm(&mut self, data: &mut dyn MemoryBankController) {
         let value = self.fetch(data);
         self.a = self.alu_sub(self.a, value);
         self.cycle_delay = 8;
     }
 
-    fn ldhl(&mut self, register: Reg8, data: &dyn MemoryBankController){
+    fn ldhl(&mut self, register: Reg8, data: &mut dyn MemoryBankController){
         let value = data.read(self.get_hl());
         self.set_r8(register, value);
         self.cycle_delay = 8;
