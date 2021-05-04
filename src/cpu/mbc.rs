@@ -50,31 +50,44 @@ pub trait MemoryBankController {
         let hi = self.read(addr+1);
 
         let ret = make_u16(lo, hi);
-        println!("read {:#08x} from {:#08x}", ret, addr);
+        println!("read 0x{:#02x} from 0x{:#04x}", ret, addr);
         ret
     }
 }
 
 pub struct Mbc1<'a> {
-    pub memory: &'a mut Vec<u8>,
+    pub memory: Vec<u8>,
+    pub rom: &'a Vec<u8>,
 }
 
 impl<'a> Mbc1<'a> {
-    pub fn new(memory: &'a mut Vec<u8>) -> Mbc1 {
+    pub fn new(rom: &'a mut Vec<u8>) -> Mbc1 {
+        let mut memory = /*vec![0_u8; 32768];*/vec![0x00_u8; 0xffff];
+        //memory.copy_from_slice(rom);
+
         Mbc1 {
-            memory: memory
+            memory: memory,
+            rom: rom
         }
     }
 }
 
 impl<'a> MemoryBankController for Mbc1<'a> {
     fn read(&mut self, addr: u16) -> u8 {
-        let ret = self.memory[addr as usize];
+        let addr = addr as usize;
+        let ret = match addr {
+            0x0000..=0x7fff => self.rom[addr],
+            0x8000..=0xffff => self.memory[addr],
+            _ => self.memory[addr],
+        };
         println!("read {:#08x} from {:#08x}", ret, addr);
         ret
     }
 
     fn write(&mut self, addr: u16, value: u8){
-        self.memory[addr as usize] = value;
+        match addr {
+            0x0000..=0x7fff => panic!("attempt to write to ROM"),
+            _ => self.memory[addr as usize] = value,
+        };
     }
 }

@@ -219,7 +219,7 @@ impl CPU {
                 self.cycle_delay = 8;
             },
             
-            // LD [HL], A
+            // LD [DE], A
             0x12 => {
                 println!("LD [DE], A");
                 let addr = self.get_de();
@@ -227,7 +227,7 @@ impl CPU {
                 self.cycle_delay = 8;
             },
 
-            // LD [HL], A
+            // LD [BC], A
             0x02 => {
                 println!("LD [DE], A");
                 let addr = self.get_bc();
@@ -463,7 +463,7 @@ impl CPU {
         self.cycle_delay = 8;
     }
 
-    fn ld_imm_u16(&mut self, dst: Reg16, data: &mut MemoryBankController) {
+    fn ld_imm_u16(&mut self, dst: Reg16, data: &mut dyn MemoryBankController) {
         println!("LD {:?}, d16", dst);
         let imm = self.fetch_u16(data);
         
