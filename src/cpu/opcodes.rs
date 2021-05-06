@@ -12,7 +12,7 @@ impl CPU {
         }
 
         let instruction = self.fetch(data);
-        println!("current instruction {:#02x}", instruction);
+        println!("current instruction {:#04x}", instruction);
 
         match instruction {
             0 => {
@@ -308,28 +308,21 @@ impl CPU {
             },
 
             // DEC r8
-            0x05 | 0x15 | 0x25 | 0x35 |
-            0x0d | 0x1d | 0x2d | 0x3d => {
+            0x05 => self.dec_r8(Reg8::B),
+            0x15 => self.dec_r8(Reg8::D),
+            0x25 => self.dec_r8(Reg8::H),
+            0x0d => self.dec_r8(Reg8::C),
+            0x1d => self.dec_r8(Reg8::E),
+            0x2d => self.dec_r8(Reg8::L),
+            0x3d => self.dec_r8(Reg8::A),
+
+            0x35  => {
                 self.unset_flag(CPU::FLAG_ZERO | CPU::FLAG_SUBTRACT | CPU::FLAG_HALF_CARRY | CPU::FLAG_CARRY);
 
-                self.cycle_delay = 4;
-
-                match instruction {
-                    0x05 => self.b = self.alu_dec(self.b),
-                    0x15 => self.d = self.alu_dec(self.d),
-                    0x25 => self.h = self.alu_dec(self.h),
-                    0x35 => { 
-                        let addr = self.get_hl();
-                        let value = self.alu_dec(data.read(addr)); 
-                        data.write(addr, value);
-                        self.cycle_delay = 12; 
-                    },
-                    0x0d => self.c = self.alu_dec(self.c),
-                    0x1d => self.e = self.alu_dec(self.e),
-                    0x2d => self.l = self.alu_dec(self.l),
-                    0x3d => self.a = self.alu_dec(self.a),
-                    _ => unreachable!()
-                };
+                let addr = self.get_hl();
+                let value = self.alu_dec(data.read(addr)); 
+                data.write(addr, value);
+                self.cycle_delay = 12;
             },
 
             // OR
@@ -441,7 +434,7 @@ impl CPU {
             },
 
             _ => {
-                panic!("instruction {:#02x} not yet implemented", instruction);
+                panic!("instruction {:#04x} not yet implemented", instruction);
             }
         }
     }
@@ -590,11 +583,23 @@ impl CPU {
     }
 
     fn inc_r8(&mut self, register: Reg8){
+        println!("INC {:?}", register);
         self.unset_flag(CPU::FLAG_ZERO | CPU::FLAG_SUBTRACT | CPU::FLAG_HALF_CARRY);
 
         self.cycle_delay = 4;
         let current_value = self.get_r8(register);
         let new_value = self.alu_inc(current_value);
+
+        self.set_r8(register, new_value);
+    }
+
+    fn dec_r8(&mut self, register: Reg8) {
+        println!("DEC {:?}", register);
+        self.unset_flag(CPU::FLAG_ZERO | CPU::FLAG_SUBTRACT | CPU::FLAG_HALF_CARRY | CPU::FLAG_CARRY);
+        self.cycle_delay = 4;
+
+        let current_value = self.get_r8(register);
+        let new_value = self.alu_dec(current_value);
 
         self.set_r8(register, new_value);
     }
@@ -713,22 +718,22 @@ mod tests {
         let mut cpu = CPU::new();
 
         cpu.set_hl(0x1234);
-        println!("h = {:#02x} l = {:#02x}", cpu.h, cpu.l);
+        println!("h = {:#04x} l = {:#04x}", cpu.h, cpu.l);
         assert_eq!(0x12, cpu.h);
         assert_eq!(0x34, cpu.l);
 
         cpu.set_bc(0xbeef);
-        println!("b = {:#02x} c = {:#02x}", cpu.b, cpu.c);
+        println!("b = {:#04x} c = {:#04x}", cpu.b, cpu.c);
         assert_eq!(0xbe, cpu.b);
         assert_eq!(0xef, cpu.c);
         
         cpu.set_de(0xcafe);
-        println!("d = {:#02x} e = {:#02x}", cpu.d, cpu.e);
+        println!("d = {:#04x} e = {:#04x}", cpu.d, cpu.e);
         assert_eq!(0xca, cpu.d);
         assert_eq!(0xfe, cpu.e);
         
         cpu.set_af(0xfade);
-        println!("a = {:#02x} f = {:#02x}", cpu.a, cpu.f);
+        println!("a = {:#04x} f = {:#04x}", cpu.a, cpu.f);
         assert_eq!(0xfa, cpu.a);
         assert_eq!(0xde, cpu.f);
     }
@@ -756,6 +761,37 @@ mod tests {
 
         assert_eq!(lo, l);
         assert_eq!(hi, h);
+    }
+
+    #[test]
+    fn alu_dec_subtracts_one() {
+        let mut cpu = CPU::new();
+
+        let a = cpu.alu_dec(5);
+
+        assert_eq!(a, 4);
+    }
+
+    #[test]
+    fn alu_dec_ets_correct_flags() {
+        let mut cpu = CPU::new();
+
+        let a = cpu.alu_dec(1);
+
+        assert_eq!(a, 0);
+        assert!(cpu.read_flag(CPU::FLAG_ZERO));
+        assert!(cpu.read_flag(CPU::FLAG_SUBTRACT));
+    }
+
+    #[test]
+    fn alu_inc_sets_correct_flags() {
+        let mut cpu = CPU::new();
+
+        let a = cpu.alu_inc(0x09);
+
+        assert_eq!(a, 0x0a);
+        assert!(!cpu.read_flag(CPU::FLAG_ZERO));
+        assert!(!cpu.read_flag(CPU::FLAG_SUBTRACT));
     }
 
 }

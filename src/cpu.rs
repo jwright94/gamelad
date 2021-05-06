@@ -88,7 +88,7 @@ impl fmt::Display for CPU {
         write!(f, "PC: {:#04x} SP: {} A: {} B: {} C: {} D: {} E: {} H: {} L: {} F: {}", 
             self.pc, self.sp, self.a, self.b, self.c, self.d, self.e, self.h, self.l, self.f)*/
         write!(f, 
-            "PC: {:#04x} SP: {:#04x} AF: {:#04x} BC: {:#04x} DE: {:#04x} HL: {:#04x}", 
+            "PC: {:#06x} SP: {:#06x} AF: {:#06x} BC: {:#06x} DE: {:#06x} HL: {:#06x}", 
             self.pc, self.sp, self.get_af(), self.get_bc(), self.get_de(), self.get_hl())
     }
 }
@@ -168,11 +168,11 @@ impl CPU {
             self.set_flag(CPU::FLAG_CARRY);
         }
 
-        if self.a == 0 {
+        if (result & 0x00ff) == 0 {
             self.set_flag(CPU::FLAG_ZERO);
         }
         
-        (result & 0xff) as u8
+        (result & 0x00ff) as u8
     }
 
     pub fn alu_sub(&mut self, a: u8, b: u8) -> u8 {
@@ -186,19 +186,11 @@ impl CPU {
     pub fn alu_inc(&mut self, a: u8) -> u8 {
         let result = self.alu_add(a, 1);
 
-        if result == 0 {
-            self.set_flag(CPU::FLAG_ZERO);
-        }
-
         result
     }
 
     pub fn alu_dec(&mut self, a: u8) -> u8 {
         let result = self.alu_sub(a, 1);
-        
-        if result == 0 {
-            self.set_flag(CPU::FLAG_ZERO);
-        }
 
         result
     }
