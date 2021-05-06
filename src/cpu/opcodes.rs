@@ -646,3 +646,101 @@ impl CPU {
         self.cycle_delay = 8;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct FlatMbc {
+        memory: Vec<u8>
+    }
+
+    impl MemoryBankController for FlatMbc {
+        
+        fn write(&mut self, a: u16, v: u8) { self.memory[a as usize] = v; }
+        fn read(&mut self, a: u16) -> u8 { self.memory[a as usize] }
+    }
+
+    fn run_bytecode(bytecode: Vec<u8>) -> CPU {
+        
+        let length = bytecode.len();
+
+        let mut cpu = CPU::new();
+        let mut mbc = FlatMbc{
+            memory: bytecode
+        };
+
+        while (cpu.pc as usize) < length {
+            cpu.step(&mut mbc);
+        }
+
+        cpu
+    }
+
+    #[test]
+    fn nop_does_nothing() {
+        let cpu = run_bytecode(vec![0x00, 0x00]);
+        assert!(cpu.pc == 2);
+        assert!(cpu.a == 0);
+    }
+
+    #[test]
+    fn ld_imm_16() {
+        let cpu = run_bytecode(vec![0x21, 0x34, 0x12]);
+        assert!(cpu.get_hl() == 0x1234);
+    }
+
+    #[test]
+    fn get_and_set_r16_return_same_values() {
+        let mut cpu = CPU::new();
+
+        cpu.set_hl(0x1234);
+        assert_eq!(0x1234, cpu.get_hl());
+
+        cpu.set_bc(0xbeef);
+        assert_eq!(0xbeef, cpu.get_bc());
+        
+        cpu.set_de(0xcafe);
+        assert_eq!(0xcafe, cpu.get_de());
+        
+        cpu.set_af(0xfade);
+        assert_eq!(0xfade, cpu.get_af());
+    }
+
+    #[test]
+    fn r16_registers_in_correct_order() {
+        let mut cpu = CPU::new();
+
+        cpu.set_hl(0x1234);
+        assert_eq!(0x12, cpu.h);
+        assert_eq!(0x34, cpu.l);
+
+        cpu.set_bc(0xbeef);
+        assert_eq!(0xbe, cpu.b);
+        assert_eq!(0xef, cpu.c);
+        
+        cpu.set_de(0xcafe);
+        assert_eq!(0xca, cpu.d);
+        assert_eq!(0xfe, cpu.e);
+        
+        cpu.set_af(0xfade);
+        assert_eq!(0xfa, cpu.a);
+        assert_eq!(0xde, cpu.f);
+    }
+
+    #[test]
+    fn inc16_properly_increments_hl() {
+        let cpu = run_bytecode(vec![0x21, 0x34, 0x12, 0x23]);
+
+        let hl = cpu.get_hl();
+        
+        assert_eq!(hl, 0x1235);
+    }
+
+}
+/*
+0x01 => self.ld_imm_u16(Reg16::BC, data),
+0x11 => self.ld_imm_u16(Reg16::DE, data),
+0x21 => self.ld_imm_u16(Reg16::HL, data),
+0x31 => self.ld_imm_u16(Reg16::SP, data),
+*/

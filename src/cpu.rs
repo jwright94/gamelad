@@ -88,7 +88,7 @@ impl fmt::Display for CPU {
         write!(f, "PC: {:#04x} SP: {} A: {} B: {} C: {} D: {} E: {} H: {} L: {} F: {}", 
             self.pc, self.sp, self.a, self.b, self.c, self.d, self.e, self.h, self.l, self.f)*/
         write!(f, 
-            "PC: {:#06x} SP: {:#06x} AF: {:#06x} BC: {:#06x} DE: {:#06x} HL: {:#06x}", 
+            "PC: {:#04x} SP: {:#04x} AF: {:#04x} BC: {:#04x} DE: {:#04x} HL: {:#04x}", 
             self.pc, self.sp, self.get_af(), self.get_bc(), self.get_de(), self.get_hl())
     }
 }
