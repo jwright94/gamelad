@@ -733,8 +733,21 @@ mod tests {
         let cpu = run_bytecode(vec![0x21, 0x34, 0x12, 0x23]);
 
         let hl = cpu.get_hl();
-        
+
         assert_eq!(hl, 0x1235);
+    }
+
+    #[test]
+    fn make_u16_and_unmake_u16_are_symmetric() {
+        let lo = 0x12;
+        let hi = 0x34;
+
+        let a = crate::cpu::make_u16(lo, hi);
+        let (l, h) = crate::cpu::unmake_u16(a);
+
+        assert_eq!(lo, l);
+        assert_eq!(hi, h);
+        assert_eq!(a, 0x1234);
     }
 
 }
