@@ -687,7 +687,8 @@ mod tests {
     #[test]
     fn ld_imm_16() {
         let cpu = run_bytecode(vec![0x21, 0x34, 0x12]);
-        assert!(cpu.get_hl() == 0x1234);
+        println!("hl = {:#04x}", cpu.get_hl());
+        assert_eq!(cpu.get_hl(), 0x1234_u16);
     }
 
     #[test]
@@ -712,18 +713,22 @@ mod tests {
         let mut cpu = CPU::new();
 
         cpu.set_hl(0x1234);
+        println!("h = {:#02x} l = {:#02x}", cpu.h, cpu.l);
         assert_eq!(0x12, cpu.h);
         assert_eq!(0x34, cpu.l);
 
         cpu.set_bc(0xbeef);
+        println!("b = {:#02x} c = {:#02x}", cpu.b, cpu.c);
         assert_eq!(0xbe, cpu.b);
         assert_eq!(0xef, cpu.c);
         
         cpu.set_de(0xcafe);
+        println!("d = {:#02x} e = {:#02x}", cpu.d, cpu.e);
         assert_eq!(0xca, cpu.d);
         assert_eq!(0xfe, cpu.e);
         
         cpu.set_af(0xfade);
+        println!("a = {:#02x} f = {:#02x}", cpu.a, cpu.f);
         assert_eq!(0xfa, cpu.a);
         assert_eq!(0xde, cpu.f);
     }
@@ -745,9 +750,12 @@ mod tests {
         let a = crate::cpu::make_u16(lo, hi);
         let (l, h) = crate::cpu::unmake_u16(a);
 
+        println!("a = {:#04x}", a);
+        println!("l = {:#04x} h = {:#04x}", l, h);
+        println!("lo = {:#04x} hi = {:#04x}", lo, hi);
+
         assert_eq!(lo, l);
         assert_eq!(hi, h);
-        assert_eq!(a, 0x1234);
     }
 
 }

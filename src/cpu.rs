@@ -33,7 +33,7 @@ fn make_u16(lo: u8, hi:u8) -> u16 {
     //println!("LO {:#08x}", lo);
     //println!("HI {:#08x}", hi);
 
-    l | (h << 8)
+    (l & 0x00ff) | ((h << 8) & 0xff00)
 }
 
 fn unmake_u16(value: u16) -> (u8, u8) {
@@ -95,43 +95,43 @@ impl fmt::Display for CPU {
 
 impl CPU {
     pub fn get_af(&self) -> u16 {
-        make_u16(self.a, self.f)
+        make_u16(self.f, self.a)
     }
 
     pub fn get_hl(&self) -> u16 {
-        make_u16(self.h, self.l)
+        make_u16(self.l, self.h)
     }
 
     pub fn get_bc(&self) -> u16 {
-        make_u16(self.b, self.c)
+        make_u16(self.c, self.b)
     }
 
     pub fn get_de(&self) -> u16 {
-        make_u16(self.d, self.e)
+        make_u16(self.e, self.d)
     }
 
     pub fn set_af(&mut self, value: u16) {
         let (lo, hi) = unmake_u16(value);
-        self.a = lo;
-        self.f = hi;
+        self.f = lo;
+        self.a = hi;
     }
 
     pub fn set_hl(&mut self, value: u16) {
         let (lo, hi) = unmake_u16(value);
-        self.h = lo;
-        self.l = hi;
+        self.l = lo;
+        self.h = hi;
     }
 
     pub fn set_bc(&mut self, value: u16) {
         let (lo, hi) = unmake_u16(value);
-        self.b = lo;
-        self.c = hi;
+        self.c = lo;
+        self.b = hi;
     }
 
     pub fn set_de(&mut self, value: u16) {
         let (lo, hi) = unmake_u16(value);
-        self.d = lo;
-        self.e = hi;
+        self.e = lo;
+        self.d = hi;
     }
 
     pub const FLAG_ZERO: u8 = 1 << 0x07;
